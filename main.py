@@ -1,4 +1,5 @@
-import ollama, sqlite3, sys
+import ollama, sqlite3, sys, os
+os.system('cls' if os.name == 'nt' else 'clear')
 
 if len(sys.argv) < 2:
     print("Missing argument: SQLite database path\neg: python main.py path/to/database.db")
@@ -29,23 +30,32 @@ def get_schema(database, table):
             return schema
 
 def prompt_ai(prompt, contents):
-    return ollama.generate(
+    response = ollama.generate(
         model='llama3.1',
         prompt= f"contents: {contents}, prompt: {prompt}",
         raw= True
     )
+    return response["response"]
 
-try:
-    tables = get_tables(database)
-    for table in tables:
-        schema = get_schema(database, table)
-        data = get_data(database, table)
-        contents.append({"schema": schema, "data": data})
 
-    prompt = input("Enter your prompt: ")
-    response = prompt_ai(prompt, contents)
-    print(response["response"])
-          
-except sqlite3.OperationalError:
-        print("Invalid database path")
-        exit(1)
+if __name__ == "__main__":
+    try:
+        tables = get_tables(database)
+        print(f"Loading database: {database}")
+
+        num = 0
+        for table in tables:
+            num += 1
+
+            schema = get_schema(database, table)
+            data = get_data(database, table)
+            contents.append({"schema": schema, "data": data})
+
+            print(f"{num}/{len(tables)} Loaded table '{table[0]}'")
+
+        print("It may take a while to generate the response, please be patient")
+        print(prompt_ai(f"Give a simple overview of what the database does, the path is {database}", contents))
+            
+    except sqlite3.OperationalError:
+            print("Invalid database path")
+            exit(1)
