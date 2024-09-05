@@ -23,7 +23,7 @@ Make inquiries on your SQLite database using Llama 3.1 locally, with no internet
 
 - [x] Read all tables in database
 - [x] Link database to Ollama
-- [ ] Chat with Ollama
+- [x] Chat with Ollama
 - [ ] Model run SQL commands according to prompts
 As of now, I have no plans to support other SQL-based databases.
 
