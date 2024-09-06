@@ -31,21 +31,15 @@ def get_schema(database, table):
             schema = cursor.fetchall()
             return schema
 
-def prompt_ai(prompt, contents):
+def prompt_ai(prompt, contents, messages):
+    messages.append({"role": "user", "content": f"prompt: {prompt}\ncontent: {contents}"})
+
     duration = time.time()
     print("----\nRESPONSE:")
 
     response = ollama.chat(
         model='llama3.1',
-        messages= [
-            {"role": "system", "content": """
-You are an assistant that responds to user inquiries regarding their SQLite3 databases.
-You are given a prompt, and content - which contains the schema and data of the database.
-Do not hallucinate. Keep it natural, concise, and relevant to the prompt. Do not explain unless asked to, have a conversation with the user.
-Your output must only be plain text, no markdown or rich text formatting - no bolding or italic, unless the user specified you to.
-            """},
-            {"role": "user", "content": f"Prompt: {prompt}, content: {contents}"}
-        ],
+        messages= messages,
         stream= True
     )
 
@@ -63,6 +57,16 @@ if __name__ == "__main__":
         tables = get_tables(database)
         print(f"Loading database: {database}")
 
+        messages= [
+            {"role": "system", "content": """
+You are an assistant that responds to user inquiries regarding their own SQLite3 databases.
+You are given a prompt, and content - which contains the schema and data of the database.
+Do not hallucinate. Keep it natural, concise, and relevant to the prompt. Do not explain unless asked to, have a conversation with the user.
+Do not include any code.
+Your output must only be plain text, no markdown or rich text formatting - no bolding or italic, unless the user specified you to.
+            """},
+        ]
+
         num = 0
         for table in tables:
             num += 1
@@ -73,13 +77,13 @@ if __name__ == "__main__":
 
             print(f"{num}/{len(tables)} Loaded table '{table[0]}'")
 
-        summary = prompt_ai(f"Give a basic, short as possible overview of the database located in {database}", contents)
+        summary = prompt_ai(f"Hello! Suggest what actions can be done with the database {database}, start by asking the user what the database is about", contents, messages)
         while True:
             prompt = input("\n---------\nPROMPT: ")
             if prompt == "exit":
                 exit()
             else:
-                response = prompt_ai(prompt, contents)
+                response = prompt_ai(prompt, contents, messages)
 
     except sqlite3.OperationalError:
             print("Invalid database path")
